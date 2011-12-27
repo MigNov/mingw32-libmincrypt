@@ -7,6 +7,7 @@ Source:		http://www.migsoft.net/projects/mincrypt/mingw32-libmincrypt-%{version}
 Group:		Development/Libraries
 License:	LGPLv2+
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
+Requires:	mingw32-gcc
 
 %define		debug_package	%{nil}
 
