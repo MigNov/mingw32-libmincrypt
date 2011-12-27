@@ -1,0 +1,38 @@
+ libminCrypt application README
+ ===============================
+
+This library is the implementation of minCrypt algorithm as based
+on the minCrypt design document written to provide simple algorithm
+implementation on the minimum number of source files.
+
+Current version of the library is 0.0.4 which implements both symmetric
+and asymmetric encryption methods. The original version was designed to
+be embedded directly into the application however as the system got
+more complex I've decided to split the project into binary and library
+forms.
+
+If you want to create the RPM packages for application the ./autobuild.sh
+script will create it for you.
+
+The algorithm has been implemented in C language with requirements
+for math library (libm) and it's distributed under the LGPLv2+ licence.
+
+Terminology
+-----------
+
+This library should be referred to as libminCrypt.
+
+Pre-requisite software
+----------------------
+
+Where versions are noted below these are the versions tested to definitely
+work. For some of them you may be able to run with earlier releases, so
+please report any success to the mailing lists
+
+ libm
+
+Copyright /  License
+--------------------
+
+All the application code is covered under the LGPLv2+ licence. For more
+information please see the LICENSE file.
