@@ -16,9 +16,9 @@ dd if=/dev/urandom of=test bs=1M count=$SIZEMB
 while [ $iter -lt $maxiter ]; do
   [ `id -u` == 0 ] && echo 3 > /proc/sys/vm/drop_caches
   T1=`date +%s`
-  ../src/mincrypt --input-file=test --output-file=test.enc --salt=$SALT --password=$PASSWORD
+  wine ../src/mincrypt.exe --input-file=test --output-file=test.enc --salt=$SALT --password=$PASSWORD
   T2=`date +%s`
-  ../src/mincrypt --input-file=test.enc --output-file=test.dec --salt=$SALT --password=$PASSWORD --decrypt --simple-mode
+  wine ../src/mincrypt.exe --input-file=test.enc --output-file=test.dec --salt=$SALT --password=$PASSWORD --decrypt --simple-mode
   T3=`date +%s`
   let X1=$T2-$T1
   let X2=$T3-$T1
@@ -31,7 +31,7 @@ done
 while [ $iter2 -lt $maxiter ]; do
   [ `id -u` == 0 ] && echo 3 > /proc/sys/vm/drop_caches
   T1=`date +%s`
-  ../src/mincrypt --input-file=test.enc --output-file=test.dec --salt=$SALT --password=$BADPWD --decrypt
+  wine ../src/mincrypt.exe --input-file=test.enc --output-file=test.dec --salt=$SALT --password=$BADPWD --decrypt
   T2=`date +%s`
   let X1=$T2-$T1
   let iter2=$iter2+1
