@@ -1,7 +1,7 @@
 /*
  *  mincrypt-main.c: Minimalistic encryption system application
  *
- *  Copyright (c) 2010-2011, Michal Novotny <mignov@gmail.com>
+ *  Copyright (c) 2010-2013, Michal Novotny <mignov@gmail.com>
  *  All rights reserved.
  *
  *  See COPYING for the license of this software
@@ -33,6 +33,8 @@ int vector_mult	= -1;
 int keysize	= 0;
 int decrypt	= 0;
 int simple_mode	= 0;
+int use_four_bs = 0;
+int use_minimal = 0;
 
 char *Wgetpass(char *msg)
 {
@@ -67,10 +69,13 @@ int parseArgs(int argc, char * const argv[]) {
 		{"key-size", 1, 0, 'k'},
 		{"key-file", 1, 0, 'f'},
 		{"dump-vectors", 1, 0, 'u'},
+ 		{"four-system", 0, 0, '4'},
+ 		{"quartet", 1, 0, 'q'},
+		{"minimal", 0, 0, 'n'},
 		{0, 0, 0, 0}
 	};
 
-	char *optstring = "i:o:p:s:v:k:u:d";
+	char *optstring = "i:o:p:s:v:k:u:q:d4n";
 
 	while (1) {
 		c = getopt_long(argc, argv, optstring,
@@ -112,6 +117,17 @@ int parseArgs(int argc, char * const argv[]) {
 			case 'u':
 				dump_file = optarg;
 				break;
+			case '4':
+				use_four_bs = 1;
+				break;
+			case 'q':
+				if (!mincrypt_set_four_system_quartet(optarg))
+					printf("Warning: Cannot set four base system quartet to %s\n", optarg);
+				break;
+			case 'n':
+				use_minimal = 1;
+				return 0;
+				break;
 			case 'v':
 				vector_mult = atoi(optarg);
 				if (vector_mult < 32)
@@ -120,6 +136,22 @@ int parseArgs(int argc, char * const argv[]) {
 	}
 
 	return ((((infile != NULL) && (outfile != NULL)) || ((keyfile != NULL) && (keysize > 0))) ? 0 : 1);
+}
+
+char *read_prompt(char *prompt)
+{
+	int c;
+	char ret[4096] = { 0 };
+	char tmp[2] = { 0 };
+
+	printf("%s", prompt);
+
+	while ((c = getchar()) != '\n') {
+		tmp[0] = c;
+		strcat(ret, tmp);
+	}
+
+	return strdup(ret);
 }
 
 int main(int argc, char *argv[])
@@ -135,6 +167,31 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	if (use_minimal == 1) {
+		int c = 0;
+		char *in, *key, *salt;
+
+		printf("User requested minimal encryption/decryption. Overriding ...\n");
+		printf("Use encryption or decryption (E/D) ? ");
+		while ((c != 'e') && (c != 'E') && (c != 'd') && (c != 'D')) {
+			c = getchar();
+		}
+
+		while (getchar() != '\n') ;
+
+		printf("%scryption selected\n", ((c == 'D') || (c == 'd')) ? "De" : "En");
+
+		in = read_prompt("Enter input data: ");
+		key = read_prompt("Enter encryption key: ");
+		salt = read_prompt("Enter encryption salt: ");
+
+		if ((c == 'D') || (c == 'd'))
+			printf("Output: %s\n", mincrypt_decrypt_minimal(in, key, salt));
+		else
+			printf("Output: %s\n", mincrypt_encrypt_minimal(in, key, salt));
+		return 0;
+	}
+
 	if (salt == NULL)
 		salt = DEFAULT_SALT_VAL;
 
@@ -148,6 +205,19 @@ int main(int argc, char *argv[])
 		}
 		password = strdup(tmp);
 		free(tmp);
+	}
+
+	/* Use base 4 numbering system for password and salt encoding */
+	if (use_four_bs == 1) {
+		unsigned char *tmp1 = NULL;
+
+		tmp1 = mincrypt_convert_to_four_system((unsigned char *)salt, strlen(salt));
+		salt = strdup(tmp1);
+		free(tmp1);
+
+		tmp1 = mincrypt_convert_to_four_system((unsigned char *)password, strlen(password));
+		password = strdup(tmp1);
+		free(tmp1);
 	}
 
 	if (keysize > 0) {

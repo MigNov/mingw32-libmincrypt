@@ -1,4 +1,4 @@
-AC_INIT([mingw32-libmincrypt], [0.0.4], [mignov@gmail.com])
+AC_INIT([mingw32-libmincrypt], [0.0.5], [mignov@gmail.com])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AM_INIT_AUTOMAKE([-Wno-portability])

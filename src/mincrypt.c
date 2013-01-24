@@ -1,7 +1,7 @@
 /*
  *  mincrypt.c: Minimalistic encryption system core
  *
- *  Copyright (c) 2010-2011, Michal Novotny <mignov@gmail.com>
+ *  Copyright (c) 2010-2013, Michal Novotny <mignov@gmail.com>
  *  All rights reserved.
  *
  *  See COPYING for the license of this software
@@ -41,6 +41,8 @@ int _avector_size = -1;// used for asymmetric approach
 int type_approach = APPROACH_SYMMETRIC;
 int out_type = ENCODING_TYPE_BINARY;
 int _simple_mode = 0;
+
+extern char *gQuartet = "CGTA";
 
 /*
 	Private function name:	get_nearest_power_of_two
@@ -217,6 +219,8 @@ long get_version(char *verstr)
 	a[0] = t.tokens[2][0];
 	micro = atoi(a);
 
+	fprintf(stderr, "DATA => %"PRIi64"\n", asymmetric_decrypt_u64(10062, 154543, 253889));
+
 	DPRINTF("%s: Got version: major = %d, minor = %d, micro = %d\n", __FUNCTION__, major, minor, micro);
 
 	return ((major << 16) + (minor << 8) + (micro));
@@ -258,6 +262,55 @@ int read_header_footer(int fd, int isFooter, int *isPrivate, int *bits)
 	free_tokens(t);
 
 	return ret;
+}
+
+/*
+	Function name:		mincrypt_generate_password
+	Since version:		0.0.5
+	Description:		The mincrypt_generate_password() function can generate random password of @len characters
+	Arguments:		@len [int]: number of password characters
+	Returns:		new password string
+*/
+char *mincrypt_generate_password(int len)
+{
+	int i, j;
+	char *out = NULL;
+	char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=/";
+
+	if (len <= 0)
+		len = DEFAULT_NEW_PASSWORD_LENGTH;
+
+	out = (char *)malloc( (len + 1) * sizeof(char) );
+	memset(out, 0, len + 1);
+	srand( time(NULL) + rand() );
+	for (i = 0; i < len; i++)
+		out[i] = chars[rand() % strlen(chars)];
+
+	return out;
+}
+
+DLLEXPORT int mincrypt_set_four_system_quartet(char *quartet)
+{
+	if (strlen(quartet) != 4)
+		return -EINVAL;
+
+	four_numbering_system_set_quartet(quartet);
+	return 0;
+}
+
+DLLEXPORT char *mincrypt_get_four_system_quartet(void)
+{
+	return four_numbering_system_get_quartet();
+}
+
+DLLEXPORT unsigned char *mincrypt_convert_to_four_system(unsigned char *data, int len)
+{
+	return four_numbering_system_encode(data, len);
+}
+
+DLLEXPORT unsigned char *mincrypt_convert_from_four_system(unsigned char *data, int len)
+{
+	return four_numbering_system_decode(data, len);
 }
 
 /*
@@ -441,8 +494,9 @@ DLLEXPORT int mincrypt_generate_keys(int bits, char *salt, char *password, char 
 		while (len2 < (bits / 8)) {
 			iter2++;
 			bit = rand() % 2;
-			p = uPassword - iter2;
-			q = uSalt / (iter2 + iter);
+			srand( tmp + iter2 * len );
+			p = uPassword - iter2 * rand();
+			q = uSalt / (iter2 + iter) * rand();
 			if (get_random_values( prime_sum % time(NULL), bits, &p, &q, &e, &d, &n, bit) < 0) {
 				DPRINTF("%s: Cannot get the random values based on the input data\n", __FUNCTION__);
 				//goto cleanup;
@@ -450,6 +504,7 @@ DLLEXPORT int mincrypt_generate_keys(int bits, char *salt, char *password, char 
 			}
 
 			DPRINTF("%s: e = %"PRIu64", d = %"PRIu64", n = %"PRIu64"\n", __FUNCTION__, e, d, n);
+			srand( tmp + iter2 * len * rand() + time(NULL) );
 			testVal = time(NULL) % 256;
 			if ((d == 0) || (asymmetric_decrypt_u64(asymmetric_encrypt_u64( testVal, e, n), d, n) != testVal )) {
 				DPRINTF("%s: Test decryption applied to the encrypted text failed!\n", __FUNCTION__);
@@ -1013,6 +1068,191 @@ DLLEXPORT unsigned char *mincrypt_decrypt(unsigned char *block, size_t size, int
 		*read_size = (enc_size > 0) ? enc_size : csize;
 
 	return out;
+}
+
+/*
+	Private function name:	hexdec
+	Since version:		0.0.5
+	Description:		Function to convert hexadecimal value to decimal value
+	Arguments:		@tmp [string]: hexadecimal string
+	Returns:		decimal value
+*/
+int hexdec(char *tmp)
+{
+	if ((tmp[0] >= 'A') && (tmp[0] <= 'F'))
+		tmp[0] = tmp[0] - 'A' + 10;
+	else
+	if ((tmp[0] >= 'a') && (tmp[0] <= 'f')) 
+		tmp[0] = tmp[0] - 'a' + 10;
+	else
+		tmp[0] = tmp[0] - '0';
+
+	if ((tmp[1] >= 'A') && (tmp[1] <= 'F'))
+		tmp[1] = tmp[1] - 'A' + 10;
+	else
+	if ((tmp[1] >= 'a') && (tmp[1] <= 'f'))
+		tmp[1] = tmp[1] - 'a' + 10;
+	else
+		tmp[1] = tmp[1] - '0';
+
+	return (tmp[0] * 16) + tmp[1];
+}
+
+/*
+	Private function name:	is_numeric
+	Since version:		0.0.5
+	Description:		Function to check whether character is a number of not
+	Arguments:		@c [int]: ASCII value of the character
+	Returns:		0 for not-numeric, 1 for numeric
+*/
+short is_numeric(int c)
+{
+	return ((c >= '0') && (c <= '9')) ? 1 : 0;
+}
+
+/*
+	Private function name:	charup
+	Since version:		0.0.5
+	Description:		Function to convert letter character to upper-case letter
+	Arguments:		@c [int]: ASCII value of the character
+	Returns:		ASCII value of upper-case version of the character
+*/
+int charup(int c)
+{
+	if ((c >= 'a') && (c <= 'z'))
+		c -= 32;
+
+	return c;
+}
+
+
+/*
+	Function name:		mincrypt_encrypt_minimal
+	Since version:		0.0.5
+	Description:		Function to encrypt using minimalistic algorithm
+	Arguments:		@input [string]: input set of characters
+				@key [string]: encryption key
+				@salt [string]: salt value to be used
+	Returns:		encrypted string or NULL on error
+*/
+DLLEXPORT char *mincrypt_encrypt_minimal(char *input, unsigned char *key, unsigned char *salt)
+{
+	int i, num, k;
+	long val, init = 0;
+	short shifted = 0;
+	char ret[4096] = { 0 };
+	char tmp[3] = { 0 };
+
+	for (i = 0; i < strlen(key); i++)
+		init += key[i] * salt[i % strlen(salt)];
+
+	memset(ret, 0, sizeof(ret));
+	for (i = 0; i < strlen(input); i++) {
+		shifted = 0;
+		val = ((init + key[i % strlen(key)] - salt[i % strlen(salt)]) % 256);
+
+		num = val - input[i];
+		if (num < 0) {
+			num = 256 + num;
+			shifted = 1;
+		}
+
+		snprintf(tmp, sizeof(tmp), "%02x", num);
+		if (shifted == 1) {
+			if (is_numeric(tmp[0]))
+				tmp[0] = 'G' + (tmp[0] - '0');
+			else
+				tmp[0] = charup(tmp[0]);
+
+			if (is_numeric(tmp[1]))
+				tmp[1] = 'G' + (tmp[1] - '0');
+			else
+				tmp[1] = charup(tmp[1]);
+		}
+
+		strcat(ret, tmp);
+	}
+
+	k = 0;
+	for (i = 0; i < strlen(input); i++)
+		k += input[i];
+
+	snprintf(tmp, sizeof(tmp), "%d", k % 10);
+	strcat(ret, tmp);
+
+	return strdup(ret);
+}
+
+/*
+	Function name:		mincrypt_decrypt_minimal
+	Since version:		0.0.5
+	Description:		Function to decrypt using minimalistic algorithm
+	Arguments:		@input [string]: input set of characters
+				@key [string]: encryption key
+				@salt [string]: salt value to be used
+	Returns:		decrypted string or NULL on error
+*/
+DLLEXPORT char *mincrypt_decrypt_minimal(char *input, unsigned char *key, unsigned char *salt)
+{
+	int i, num, j, k, cs, len;
+	long val, init = 0;
+	short shifted = 0;
+	char ret[4096] = { 0 };
+	char tmp[3] = { 0 };
+
+	for (i = 0; i < strlen(key); i++)
+		init += key[i] * salt[i % strlen(salt)];
+
+	cs = 0;
+	if (strlen(input) % 2 == 1) {
+		cs = input[strlen(input) - 1];
+		len = strlen(input) - 1;
+	}
+	else
+		len = strlen(input);
+
+	j = 0;
+	memset(ret, 0, sizeof(ret));
+	for (i = 0; i < len; i += 2) {
+		shifted = 0;
+
+		val = ((init + key[j % strlen(key)] - salt[j % strlen(salt)]) % 256);
+		snprintf(tmp, sizeof(tmp), "%c%c", input[i], input[i + 1]);
+		if (((tmp[0] >= 'G') && (tmp[0] <= 'P'))
+			|| ((tmp[0] >= 'A') && (tmp[0] <= 'Z'))) {
+			if ((tmp[0] >= 'G') && (tmp[0] <= 'P'))
+				tmp[0] = (tmp[0] - 'G') + 48;
+			shifted = 1;
+		}
+
+		if (((tmp[1] >= 'G') && (tmp[1] <= 'P'))
+			|| ((tmp[1] >= 'A') && (tmp[1] <= 'Z'))) {
+			if ((tmp[1] >= 'G') && (tmp[1] <= 'P'))
+				tmp[1] = (tmp[1] - 'G') + 48;
+			shifted = 1;
+		}
+
+		num = hexdec(tmp);
+		if (shifted == 1)
+			num = 256 + num;
+
+		tmp[0] = val - num;
+		tmp[1] = 0;
+
+		strcat(ret, tmp);
+		j++;
+	}
+
+	if (cs > 0) {
+		k = 0;
+		for (i = 0; i < strlen(ret); i++)
+			k += ret[i];
+
+		if ((k % 10) != (cs - '0'))
+			return NULL;
+	}
+
+	return strdup(ret);
 }
 
 /*

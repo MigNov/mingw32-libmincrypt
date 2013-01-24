@@ -1,5 +1,5 @@
 Name:		mingw32-libmincrypt
-Version:	0.0.4
+Version:	0.0.5
 Release:	1%{?dist}%{?extra_release}
 Summary:	Library form of minCrypt crypto-algorithm implementation for Windows
 Source:		http://www.migsoft.net/projects/mincrypt/mingw32-libmincrypt-%{version}.tar.gz
@@ -39,5 +39,8 @@ rm -rf %{buildroot}
 %{_includedir}/mincrypt.h
 
 %changelog
+* Thu Mar 15 2012 Michal Novotny <mignov@gmail.com> - 0.0.5:
+- Fix asymmetric key generation algorithm to generate random initialization vectors
+
 * Tue Dec 27 2011 Michal Novotny <mignov@gmail.com> - 0.0.4:
 - Split minCrypt project into minCrypt binary and libminCrypt library

@@ -1,7 +1,7 @@
 /*
  *  asymmetric.c: asymmetric operations
  *
- *  Copyright (c) 2010-2011, Michal Novotny <mignov@gmail.com>
+ *  Copyright (c) 2010-2013, Michal Novotny <mignov@gmail.com>
  *  All rights reserved.
  *
  *  See COPYING for the license of this software
@@ -52,13 +52,10 @@ uint64_t get_decryption_value(uint64_t p, uint64_t q, uint64_t e, uint64_t *on)
 	n = p * q;
 	eu = (p - 1) * (q - 1);
 
-	DPRINTF("%s: p = %"PRIu64", q = %"PRIu64", n = %"PRIu64", eu = %"PRIu64"\n",
-			__FUNCTION__, p, q, n, eu);
-
 	d = 0;
 	if (e > 0) {
-		for (i = 0; i < (int)eu; i++) {
-			if ((i * (int)e) % eu == 1.) {
+		for (i = 0; i < eu; i++) {
+			if ((i * e) % eu == 1.) {
 				d = i;
 				break;
 			}
@@ -68,6 +65,8 @@ uint64_t get_decryption_value(uint64_t p, uint64_t q, uint64_t e, uint64_t *on)
 	if (on != NULL)
 		*on = n;
 
+	DPRINTF("%s: p = %"PRIu64", q = %"PRIu64", n = %"PRIu64", eu = %"PRIu64" => %"PRIu64"\n",
+			__FUNCTION__, p, q, n, eu, d);
 	return d;
 }
 

@@ -1,3 +1,4 @@
+MINGW32=i686-w64-mingw32-gcc
 LIBNAME=mincrypt
 SOURCES=mincrypt.c base64.c crc32.c byteops.c asymmetric.c mincrypt.h
 

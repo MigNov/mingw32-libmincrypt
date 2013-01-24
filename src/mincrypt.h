@@ -1,7 +1,7 @@
 /*
  *  mincrypt.h: Minimalistic encryption system headers
  *
- *  Copyright (c) 2010-2011, Michal Novotny <mignov@gmail.com>
+ *  Copyright (c) 2010-2013, Michal Novotny <mignov@gmail.com>
  *  All rights reserved.
  *
  *  See COPYING for the license of this software
@@ -12,7 +12,7 @@
 #define MINCRYPT_H
 
 // Comment following line to enable debugging
-#define DISABLE_DEBUG
+//#define DISABLE_DEBUG
 
 #define BUFFER_SIZE			(1 << 17)			/* Make 128 kB to be default buffer size */
 #define BUFFER_SIZE_BASE64		(((BUFFER_SIZE + 2) / 3) * 4)
@@ -20,6 +20,7 @@
 #define SIGNATURE			"MCF"
 #define DEFAULT_SALT_VAL		SIGNATURE
 #define DEFAULT_VECTOR_MULT		0x20
+#define DEFAULT_NEW_PASSWORD_LENGTH	8
 
 #define ENCODING_TYPE_BASE		0x10
 #define ENCODING_TYPE_BINARY		ENCODING_TYPE_BASE
@@ -97,6 +98,8 @@ typedef struct tPrimes {
 	uint64_t *numbers;
 } tPrimes;
 
+extern char *gQuartet;
+
 #define	BINARY_OPERATION_OR	0x00
 #define	BINARY_OPERATION_AND	0x01
 #define	BINARY_OPERATION_XOR	0x02
@@ -148,5 +151,12 @@ unsigned int asymmetric_encrypt(unsigned int c, int e, int n);
 uint64_t asymmetric_encrypt_u64(uint64_t c, uint64_t e, uint64_t n);
 uint64_t asymmetric_decrypt_u64(uint64_t c, uint64_t d, uint64_t n);
 tPrimes get_prime_elements(uint64_t number);
+char *mincrypt_generate_password(int len);
+int mincrypt_set_four_system_quartet(char *quartet);
+char *mincrypt_get_four_system_quartet(void);
+unsigned char *mincrypt_convert_to_four_system(unsigned char *data, int len);
+unsigned char *mincrypt_convert_from_four_system(unsigned char *data, int len);
+char *mincrypt_encrypt_minimal(char *input, unsigned char *key, unsigned char *salt);
+char *mincrypt_decrypt_minimal(char *input, unsigned char *key, unsigned char *salt);
 
 #endif
