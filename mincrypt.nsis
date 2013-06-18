@@ -1,0 +1,66 @@
+#!Nsis Installer Command Script
+# data/virt-viewer.nsis.  Generated from virt-viewer.nsis.in by configure.
+# To build an installer from the script you would normally do:
+#
+#   makensis virt-viewer.nsis
+#
+# which will generate the output file 'virt-viewer-0.5.7.exe' which is a Windows
+# installer containing your program.
+
+Name "minCrypt"
+OutFile "mincrypt-setup.exe"
+InstallDir "$PROGRAMFILES\minCrypt"
+InstallDirRegKey HKCU "Software\minCrypt" ""
+
+RequestExecutionLevel user
+SetCompressor bzip2
+ShowInstDetails hide
+ShowUninstDetails hide
+XPStyle on
+
+Page directory
+Page instfiles
+
+#!define REG_UNINSTALL "Software\Microsoft\Windows\CurrentVersion\Uninstall\virt-viewer"
+#
+#Function RegisterApplication
+#    ;Register uninstaller into Add/Remove panel (for local user only)
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayName" "VirtViewer 0.5.7"
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayIcon" "$\"$INSTDIR\bin\virt-viewer.exe$\""
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "Publisher" "virt-manager.org"
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "DisplayVersion" "0.5.7"
+#    WriteRegDWord HKCU "${REG_UNINSTALL}" "EstimatedSize" 32000 ;KB
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "HelpLink" "http://www.virt-manager.org"
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "URLInfoAbout" "http://www.virt-manager.org"
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "InstallLocation" "$\"$INSTDIR$\""
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "InstallSource" "$\"$EXEDIR$\""
+#    WriteRegDWord HKCU "${REG_UNINSTALL}" "NoModify" 1
+#    WriteRegDWord HKCU "${REG_UNINSTALL}" "NoRepair" 1
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+#    WriteRegStr HKCU "${REG_UNINSTALL}" "Comments" "Uninstalls VirtViewer."
+#FunctionEnd
+
+Function .onInit
+  StrCpy $INSTDIR "$PROGRAMFILES\$(^Name)"
+FunctionEnd
+
+Section ""
+  WriteRegStr HKCU "Software\minCrypt" "" $INSTDIR
+
+  SetOutPath "$INSTDIR\bin"
+  File "src/mincrypt.exe"
+  File "src/mincrypt.dll"
+
+  #ReadEnvStr $0 COMSPEC
+  #SetOutPath "$INSTDIR"
+  #nsExec::ExecToLog '$0 /C bin\pango-querymodules.exe > etc\pango\pango.modules'
+
+  # make virt-viewer the default spice-x client
+  #WriteRegStr HKCU "Software\spice-space.org\spicex" "client" "$INSTDIR\bin\remote-viewer.exe --spice-controller"
+
+SectionEnd
+
+#Section -post
+  #WriteUninstaller "$INSTDIR\Uninstall.exe"
+  #Call RegisterApplication
+#SectionEnd

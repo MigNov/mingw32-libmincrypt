@@ -4,7 +4,7 @@ SOURCES=mincrypt.c base64.c crc32.c byteops.c asymmetric.c mincrypt.h
 
 EXTRA_DIST = mincrypt-tui.c mincrypt.c base64.c crc32.c byteops.c asymmetric.c mincrypt.h
 
-all: compile-windows del-temp
+all: compile-windows del-temp make-nsis
 
 compile-windows:
 	$(MINGW32) -Wall -o $(LIBNAME).dll -mdll $(SOURCES) -DBUILDING_DLL -Wl,--out-implib,lib$(LIBNAME).a -DWINDOWS -DHAVE_CONFIG_H
@@ -15,6 +15,9 @@ install-exec-local:
 	cp -f libmincrypt.a $(DESTDIR)$(libdir)
 	cp -f mincrypt.exe $(DESTDIR)$(bindir)
 	cp -f mincrypt.h $(DESTDIR)$(includedir)
+
+make-nsis:
+	makensis ../mincrypt.nsis
 
 del-temp:
 	rm -f *.o
