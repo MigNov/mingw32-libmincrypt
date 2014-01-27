@@ -50,6 +50,8 @@ Section ""
   SetOutPath "$INSTDIR\bin"
   File "src/mincrypt.exe"
   File "src/mincrypt.dll"
+  File "src/mincrypt.h"
+  File "src/libmincrypt.a"
 
   #ReadEnvStr $0 COMSPEC
   #SetOutPath "$INSTDIR"
